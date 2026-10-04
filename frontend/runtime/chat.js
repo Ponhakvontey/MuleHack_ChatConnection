@@ -1,6 +1,7 @@
 import { backendFetch as fetch, backendUrl, authState } from '../services/auth.js'
 import { createCallController } from './calls.js'
 import { generateAESKey, encryptMessage, decryptMessage } from './crypto.js'
+import { attachThreatWarnings } from './threatWarnings.js'
 
 // Keep existing handlers and protocol logic; run DOM-ready work after Vue mounts.
 export function initializeChat({ chatUser, loggedInUser, callState, conversationUsers = [], onConversationChange = () => {} }) {
@@ -336,6 +337,9 @@ function addMessageToUI(sender, content, timestamp=null) {
   }
 
   contentDiv.appendChild(textDiv);
+  if (typeof content === 'string') {
+    try { attachThreatWarnings(contentDiv, content); } catch (_) { /* Security additions must not interrupt chat. */ }
+  }
 
   const tsDiv = document.createElement("div");
   tsDiv.className = "message-timestamp";

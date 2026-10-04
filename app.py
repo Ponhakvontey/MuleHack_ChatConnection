@@ -689,6 +689,8 @@ def close_user_connection(username):
             pass
 
 app.config['CLOSE_USER_CONNECTION'] = close_user_connection
+from modules.community_threats import community_threats
+app.register_blueprint(community_threats)
 init_auth(app)
 
 

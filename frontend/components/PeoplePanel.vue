@@ -1,10 +1,14 @@
 <script setup>
 import { onMounted, onUnmounted, ref } from 'vue'
 import { backendFetch } from '../services/auth.js'
+import { similarContact, usernameDifference } from '../runtime/securitySignals.js'
 const props = defineProps({ blockedOnly: Boolean })
 const emit = defineEmits(['conversations', 'message', 'changed'])
 const state = ref({ friends: [], incoming: [], outgoing: [], recommended: [], blocked: [], conversations: [] })
 const query = ref(''), results = ref([]), error = ref(''), loading = ref(false), busy = ref(false)
+function identityWarning(user) {
+ try { return similarContact(user, state.value.friends) } catch { return null }
+}
 let timer, searchVersion = 0, disposed = false
 async function read(path) {
  const response = await backendFetch(path)
@@ -70,6 +74,13 @@ onUnmounted(() => { disposed = true; clearInterval(timer); window.removeEventLis
      <div v-for="user in group.users" :key="user.id" class="person">
       <div class="user-avatar-initial">{{ user.username[0]?.toUpperCase() }}</div>
       <span>{{ user.full_name || user.username }}<small>@{{ user.username }}</small><small v-if="user.reason">{{ user.reason }}</small></span>
+      <details v-if="user.relationship !== 'FRIENDS' && identityWarning(user)" class="identity-warning">
+       <summary>⚠ Similar to @{{ identityWarning(user).username }}</summary>
+       <small>These are different accounts. Check the username carefully before connecting.</small>
+       <small>This account: @<template v-for="(part, index) in usernameDifference(user.username, identityWarning(user).username)" :key="index"><mark v-if="index === 1">{{ part }}</mark><template v-else>{{ part }}</template></template></small>
+       <small>Known contact: @<template v-for="(part, index) in usernameDifference(identityWarning(user).username, user.username)" :key="index"><mark v-if="index === 1">{{ part }}</mark><template v-else>{{ part }}</template></template></small>
+       <button class="profile-action-btn" :disabled="busy" @click="act(identityWarning(user), 'message')">Open known contact</button>
+      </details>
       <div class="person-actions">
        <button v-if="user.relationship === 'NONE'" class="profile-action-btn primary" :disabled="busy" @click="act(user, 'request')">Add Friend</button>
        <template v-else-if="user.relationship === 'PENDING_SENT'"><small>Request Sent</small><button class="profile-action-btn" :disabled="busy" @click="act(user, 'cancel')">Cancel Request</button></template>

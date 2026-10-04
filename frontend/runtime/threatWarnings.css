@@ -1,0 +1,31 @@
+/* Every selector is restricted to the link-safety card. */
+.talky-safety-card {
+  box-sizing: border-box; width: 470px; max-width: 100%; margin-top: 8px;
+  overflow: hidden; border: 1px solid #f0c3c8; border-radius: 15px;
+  background: #fff; color: #172033; text-align: left;
+  box-shadow: 0 8px 24px rgba(31,43,62,.07); font-family: inherit;
+}
+.talky-safety-card.unknown { border-color: #ecdcae; }
+.talky-safety-card .safety-top { display: flex; align-items: center; gap: 9px; padding: 11px 12px 8px; }
+.talky-safety-card .safety-icon { display: grid; width: 32px; height: 32px; flex: 0 0 auto; place-items: center; border-radius: 9px; background: #ffebed; color: #d84554; }
+.talky-safety-card.unknown .safety-icon { background: #fff6dc; color: #bb7d0b; }
+.talky-safety-card .safety-title { min-width: 0; flex: 1; }
+.talky-safety-card .risk-label { color: #d64555; font-size: 9px; font-weight: 750; letter-spacing: .25px; text-transform: uppercase; }
+.talky-safety-card.unknown .risk-label { color: #a66c08; }
+.talky-safety-card h3 { margin: 2px 0 0; font-size: 12px; overflow-wrap: anywhere; }
+.talky-safety-card .risk-summary { margin: 0; padding: 0 12px; color: #505a69; font-size: 10px; line-height: 1.4; }
+.talky-safety-card .details-toggle { margin: 8px 12px 10px; padding: 0; color: #2d6fd8; font-size: 9px; font-weight: 650; cursor: pointer; list-style: none; }
+.talky-safety-card .details-toggle::-webkit-details-marker { display: none; }
+.talky-safety-card .safety-details { display: grid; gap: 7px; margin: 0 12px 10px; padding: 9px; border-radius: 9px; background: #f6f8fb; font-size: 10px; line-height: 1.5; color: #4d5664; }
+.talky-safety-card .safety-details p { margin: 0; }
+.talky-safety-card .community-status { margin: 0 12px 10px; color: #707987; font-size: 10px; line-height: 1.4; }
+.talky-safety-card .safety-actions { display: flex; flex-wrap: wrap; gap: 6px; padding: 9px 12px; border-top: 1px solid #eceff3; background: #fcfcfd; }
+.talky-safety-card button { display: flex; min-height: 30px; align-items: center; gap: 5px; padding: 0 9px; border: 0; border-radius: 8px; font-family: inherit; font-size: 9px; font-weight: 650; cursor: pointer; }
+.talky-safety-card .open-link { background: #b47b12; color: #fff; }
+.talky-safety-card .check-link { background: #eaf2ff; color: #2b6fdc; }
+.talky-safety-card .report-link { margin-left: auto; background: transparent; color: #707987; }
+.talky-safety-card .report-panel { padding: 10px 12px; border-top: 1px solid #eceff3; }
+.talky-safety-card .report-panel[hidden] { display: none; }
+.talky-safety-card select { width: 100%; margin-bottom: 8px; padding: 6px; border: 1px solid #e1e5eb; border-radius: 8px; background: #fff; color: #172033; font: inherit; font-size: 11px; }
+.talky-safety-card button:disabled { opacity: .6; cursor: wait; }
+.talky-safety-card button:focus-visible, .talky-safety-card summary:focus-visible { outline: 2px solid #2b6fdc; outline-offset: 2px; }
