@@ -456,6 +456,56 @@ class AuthenticationTests(unittest.TestCase):
             self.assertTrue(smtp.starttls.call_args.kwargs['context'].check_hostname)
             self.assertIn('123456', smtp.send_message.call_args.args[0].get_content())
 
+    def test_brevo_sender_uses_https_and_preserves_otp_content(self):
+        app.config.pop('OTP_SENDER')
+        with patch.dict(os.environ, {'EMAIL_PROVIDER': 'brevo', 'BREVO_API_KEY': 'test-key',
+                                      'EMAIL_FROM': 'sender@example.test'}), \
+                patch('modules.authentication.urlopen') as transport:
+            response = transport.return_value.__enter__.return_value
+            response.status = 201
+            response.read.return_value = b'{"messageId":"test-message"}'
+            self.assertIsNone(send_otp('alice@example.test', '123456'))
+            outgoing = transport.call_args.args[0]
+            self.assertEqual(outgoing.full_url, 'https://api.brevo.com/v3/smtp/email')
+            self.assertEqual(outgoing.get_header('Api-key'), 'test-key')
+            payload = json.loads(outgoing.data)
+            self.assertEqual(payload['to'], [{'email': 'alice@example.test'}])
+            self.assertEqual(payload['sender']['email'], 'sender@example.test')
+            self.assertIn('123456', payload['textContent'])
+            self.assertEqual(transport.call_args.kwargs['timeout'], 15)
+            import ssl
+            self.assertEqual(transport.call_args.kwargs['context'].verify_mode, ssl.CERT_REQUIRED)
+
+    def test_brevo_delivery_failure_keeps_login_unauthenticated(self):
+        app.config.pop('OTP_SENDER')
+        from urllib.error import HTTPError
+        with patch.dict(os.environ, {'EMAIL_PROVIDER': 'brevo', 'BREVO_API_KEY': 'test-key',
+                                      'EMAIL_FROM': 'sender@example.test'}), \
+                patch('modules.authentication.urlopen', side_effect=HTTPError(
+                    'https://api.brevo.com/v3/smtp/email', 403, 'Rejected', {}, None)):
+            response = self.login()
+            self.assertEqual(response.status_code, 503)
+            self.assertNotIn('test-key', response.get_data(as_text=True))
+            self.assertEqual(OtpChallenge.query.count(), 0)
+            self.assertEqual(self.client.get('/api/dashboard').status_code, 401)
+
+    def test_production_brevo_config_does_not_require_smtp(self):
+        from flask import Flask
+        from modules.settings import configure
+        settings = {'NODE_ENV': 'production', 'SESSION_SECRET': secrets.token_hex(32),
+                    'DATABASE_URL': 'postgresql://user:pass@localhost/test',
+                    'FRONTEND_URL': 'https://frontend.example.test',
+                    'BACKEND_URL': 'https://backend.example.test', 'USE_SUPABASE': 'true',
+                    'SUPABASE_URL': 'https://storage.example.test', 'SUPABASE_KEY': 'test-key',
+                    'EMAIL_PROVIDER': 'brevo', 'BREVO_API_KEY': 'test-key',
+                    'EMAIL_FROM': 'sender@example.test'}
+        with patch.dict(os.environ, settings, clear=True):
+            configure(Flask('brevo-config-test'))
+        settings.pop('BREVO_API_KEY')
+        with patch.dict(os.environ, settings, clear=True):
+            with self.assertRaisesRegex(RuntimeError, 'BREVO_API_KEY'):
+                configure(Flask('brevo-missing-key-test'))
+
     def test_email_failure_never_authenticates(self):
         app.config['OTP_SENDER'] = MagicMock(side_effect=RuntimeError('SMTP failed'))
         self.assertEqual(self.login().status_code, 503)

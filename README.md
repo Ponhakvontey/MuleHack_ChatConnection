@@ -126,9 +126,10 @@ and [Flask deployment guide](https://render.com/docs/deploy-flask) describe the
 hosting settings.
 
 Backend required variables: NODE_ENV=production, DATABASE_URL, SESSION_SECRET,
-FRONTEND_URL, BACKEND_URL, SMTP_HOST, SMTP_PORT, SMTP_FROM, SMTP_USER and
-SMTP_PASSWORD when your provider requires them, USE_SUPABASE=true, SUPABASE_URL,
-and SUPABASE_KEY. Use a durable PostgreSQL service, with a standard postgres://
+FRONTEND_URL, BACKEND_URL, USE_SUPABASE=true, SUPABASE_URL, and SUPABASE_KEY.
+For EMAIL_PROVIDER=brevo, also set BREVO_API_KEY and EMAIL_FROM. For the default
+SMTP sender, set SMTP_HOST, SMTP_PORT, SMTP_FROM and SMTP_USER/SMTP_PASSWORD
+when your provider requires them. Use a durable PostgreSQL service, with a standard postgres://
 or postgresql:// connection URL. The database role needs schema migration
 permissions on initial startup. Production refuses SQLite or local upload
 storage. Configure a PRIVATE Supabase bucket (default `uploads`, overridden by
@@ -171,3 +172,25 @@ identity. Browser verification covers protected direct navigation, password/OTP
 forms, authenticated refresh, existing encrypted chat, and logout. Actual SMTP
 delivery, PostgreSQL connectivity, Supabase storage and the final hosted HTTPS
 configuration must also be checked after setting deployment credentials.
+
+
+### OTP email on Render Free
+
+Render Free blocks outbound SMTP ports 25, 465 and 587. The Blueprint uses
+`EMAIL_PROVIDER=brevo` to send the same verification emails through HTTPS.
+Set `BREVO_API_KEY` and `EMAIL_FROM` on the backend only. SMTP credentials are
+not required in this mode; local development defaults to the existing SMTP sender.
+No authentication routes, OTP rules or frontend behavior change.
+
+1. Create a free account at https://www.brevo.com/ and enable transactional email.
+2. Add and verify your sender email in Brevo's Senders settings.
+3. Generate an API key in SMTP & API > API Keys (not an SMTP key).
+4. Set backend `EMAIL_PROVIDER=brevo`, `BREVO_API_KEY=<your API key>`,
+   and `EMAIL_FROM=<your verified sender email>` in Render.
+5. Push the code to GitHub and redeploy the backend, then test OTP delivery.
+
+Brevo may replace a free/unverified sender domain with a Brevo-managed domain
+for deliverability. A domain you control is recommended for a stable branded
+sender. Account activation and provider quotas still apply. Never put the API
+key in a VITE variable or commit it to GitHub. Never disable OTP to bypass an
+email delivery failure.

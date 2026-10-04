@@ -10,6 +10,8 @@ import ssl
 import time
 from email.message import EmailMessage
 from functools import wraps
+from urllib.request import Request, urlopen
+from urllib.error import HTTPError, URLError
 
 import click
 from flask import Blueprint, current_app, g, jsonify, request, session, redirect
@@ -210,12 +212,38 @@ def send_otp(email, code):
     if sender:
         sender(email, code)
         return
+    body = (f'Your Talky verification code is {code}. It expires in 5 minutes. '
+            'If you did not request this code, ignore this email.')
+    provider = os.getenv('EMAIL_PROVIDER', 'smtp').strip().lower()
+    if provider == 'brevo':
+        api_key = os.getenv('BREVO_API_KEY')
+        from_address = os.getenv('EMAIL_FROM')
+        if not api_key or not from_address:
+            raise RuntimeError('Brevo email configuration is missing')
+        payload = json.dumps({'sender': {'name': 'Talky', 'email': from_address},
+                              'to': [{'email': email}],
+                              'subject': 'Your Talky verification code', 'textContent': body}).encode('utf-8')
+        outgoing = Request('https://api.brevo.com/v3/smtp/email', data=payload, method='POST',
+                           headers={'api-key': api_key,
+                                    'Content-Type': 'application/json', 'User-Agent': 'Talky/1.0'})
+        try:
+            with urlopen(outgoing, timeout=15, context=ssl.create_default_context()) as response:
+                if response.status != 201:
+                    raise RuntimeError('Email provider rejected delivery')
+                result = json.loads(response.read())
+                if not isinstance(result, dict) or not result.get('messageId'):
+                    raise RuntimeError('Email provider did not acknowledge delivery')
+        except (HTTPError, URLError, TimeoutError, ValueError):
+            # Do not include provider response bodies, recipient, code or credentials.
+            raise RuntimeError('HTTPS email delivery failed') from None
+        return
+    if provider != 'smtp':
+        raise RuntimeError('Unsupported EMAIL_PROVIDER')
     message = EmailMessage()
     message['Subject'] = 'Your Talky verification code'
     message['From'] = os.environ['SMTP_FROM']
     message['To'] = email
-    message.set_content(f'Your Talky verification code is {code}. It expires in 5 minutes. '
-                        'If you did not request this code, ignore this email.')
+    message.set_content(body)
     use_ssl = os.getenv('SMTP_SSL', 'false').lower() == 'true'
     transport = smtplib.SMTP_SSL if use_ssl else smtplib.SMTP
     tls_context = ssl.create_default_context()

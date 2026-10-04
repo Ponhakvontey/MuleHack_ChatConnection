@@ -29,11 +29,19 @@ def configure(app):
         for value in (frontend, backend):
             if urlparse(value).scheme != 'https':
                 raise RuntimeError('Production FRONTEND_URL and BACKEND_URL must use HTTPS')
-        if os.getenv('SMTP_SSL', 'false').lower() != 'true' and os.getenv('SMTP_STARTTLS', 'true').lower() != 'true':
-            raise RuntimeError('Production SMTP must use TLS')
-        for name in ('SMTP_HOST', 'SMTP_FROM'):
-            if not os.getenv(name):
-                raise RuntimeError(f'{name} is required in production')
+        provider = os.getenv('EMAIL_PROVIDER', 'smtp').strip().lower()
+        if provider == 'brevo':
+            for name in ('BREVO_API_KEY', 'EMAIL_FROM'):
+                if not os.getenv(name):
+                    raise RuntimeError(f'{name} is required for Brevo in production')
+        elif provider == 'smtp':
+            if os.getenv('SMTP_SSL', 'false').lower() != 'true' and os.getenv('SMTP_STARTTLS', 'true').lower() != 'true':
+                raise RuntimeError('Production SMTP must use TLS')
+            for name in ('SMTP_HOST', 'SMTP_FROM'):
+                if not os.getenv(name):
+                    raise RuntimeError(f'{name} is required in production')
+        else:
+            raise RuntimeError('EMAIL_PROVIDER must be smtp or brevo')
         if os.getenv('USE_SUPABASE') != 'true' or not os.getenv('SUPABASE_URL') or not os.getenv('SUPABASE_KEY'):
             raise RuntimeError('Production requires USE_SUPABASE=true and private Supabase storage credentials')
     same_site = os.getenv('SESSION_COOKIE_SAMESITE', 'None' if production else 'Lax')
