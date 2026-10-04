@@ -1,0 +1,35 @@
+
+    .profile-popup {
+    position: absolute;
+    background: white;
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    display: none;
+    z-index: 9999;
+    }
+
+    .popup-content {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .popup-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+    }
+    .profile-name {
+    text-align: center;
+    font-size: 12px;
+    margin-top: 5px;
+    color: #333;
+    word-break: break-word;
+    }
+    .logo {
+    height: 36px;
+    width: auto;
+    }
+    

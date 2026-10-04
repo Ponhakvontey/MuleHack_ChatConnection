@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# Environment variables
+.env
+.env.*
+
+# Database
+*.db
+*.sqlite3
+instance/
+
+# Uploads
+uploads/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local dev secret key (auto-generated, do not commit)
+.secret_key
+
+# Frontend dependencies
+node_modules/
+
+# Documented placeholders are safe to commit
+!.env.example
+.auth-qa/
+.auth-tools/
+.auth-runtime/

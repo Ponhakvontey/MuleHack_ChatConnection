@@ -1,0 +1,12 @@
+flask>=3.1,<4
+flask-sock
+gunicorn
+gevent
+flask_sqlalchemy
+cryptography
+psycopg2-binary
+supabase
+psycopg
+psycopg[binary]
+
+python-dotenv>=1.0,<2
